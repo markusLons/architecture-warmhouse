@@ -1,0 +1,125 @@
+@startuml
+title Тёплый дом — логическая ER-диаграмма To-Be
+hide circle
+skinparam linetype ortho
+entity "Пользователь" as User {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100)
+    * email : VARCHAR(255) <<UNIQUE>>
+}
+entity "Доступ пользователя к дому" as UserHouse {
+    * user_id : UUID <<PK, FK>>
+    * house_id : UUID <<PK, FK>>
+    --
+    * role : VARCHAR(50)
+}
+entity "Дом" as House {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100)
+    address : TEXT
+}
+entity "Устройство" as Device {
+    * id : UUID <<PK>>
+    --
+    * house_id : UUID <<FK>>
+    * type_id : UUID <<FK>>
+    * name : VARCHAR(100)
+    serial_number : VARCHAR(100)
+    connection_address : TEXT
+}
+entity "Тип устройства" as DeviceType {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(100)
+}
+entity "Возможность устройства" as Capability {
+    * id : UUID <<PK>>
+    --
+    * code : VARCHAR(100) <<UNIQUE>>
+}
+entity "Возможности устройства" as DeviceCapability {
+    * device_id : UUID <<PK, FK>>
+    * capability_id : UUID <<PK, FK>>
+}
+entity "Последнее показание" as Reading {
+    * device_id : UUID <<PK, REF>>
+    * metric : VARCHAR(50) <<PK>>
+    --
+    * value : DOUBLE PRECISION
+    * unit : VARCHAR(20)
+    * measured_at : TIMESTAMPTZ
+}
+entity "Команда" as Command {
+    * id : UUID <<PK>>
+    --
+    * device_id : UUID <<REF>>
+    * action : VARCHAR(50)
+    * status : VARCHAR(30)
+    * created_at : TIMESTAMPTZ
+    completed_at : TIMESTAMPTZ
+    error_message : TEXT
+}
+entity "Подтверждённое состояние" as DeviceState {
+    * device_id : UUID <<PK, REF>>
+    * property : VARCHAR(50) <<PK>>
+    --
+    * value : VARCHAR(100)
+    * confirmed_at : TIMESTAMPTZ
+}
+entity "Настройки камеры" as CameraSettings {
+    * device_id : UUID <<PK, REF>>
+    --
+    * stream_url : TEXT
+    credential_ref : TEXT
+}
+entity "Сценарий" as Scenario {
+    * id : UUID <<PK>>
+    --
+    * house_id : UUID <<REF>>
+    * name : VARCHAR(100)
+    * enabled : BOOLEAN
+    * sensor_id : UUID <<REF>>
+    * metric : VARCHAR(50)
+    * operator : VARCHAR(10)
+    * threshold : DOUBLE PRECISION
+    * unit : VARCHAR(20)
+    * target_device_id : UUID <<REF>>
+    * action : VARCHAR(50)
+    * condition_active : BOOLEAN
+}
+entity "Срабатывание сценария" as ScenarioRun {
+    * id : UUID <<PK>>
+    --
+    * scenario_id : UUID <<FK>>
+    * command_id : UUID <<REF, UNIQUE>>
+    * triggered_at : TIMESTAMPTZ
+    * status : VARCHAR(30)
+}
+User ||--o{ UserHouse : имеет доступ
+House ||--o{ UserHouse : доступен
+House ||--o{ Device : содержит
+DeviceType ||--o{ Device : определяет тип
+Device ||--o{ DeviceCapability : поддерживает
+Capability ||--o{ DeviceCapability : доступна
+Device ||..o{ Reading : измеряет
+Device ||..o{ Command : выполняет
+Device ||..o{ DeviceState : имеет состояние
+Device ||..o| CameraSettings : настройки камеры
+House ||..o{ Scenario : содержит
+Device ||..o{ Scenario : источник показаний
+Device ||..o{ Scenario : исполнитель действия
+Scenario ||--o{ ScenarioRun : срабатывает
+Command ||..o| ScenarioRun : результат команды
+legend bottom
+  Реестр: User, UserHouse, House, Device, DeviceType, Capability, DeviceCapability.
+  Сенсоры: Reading. Исполнители: Command, DeviceState.
+  Камеры: CameraSettings. Сценарии: Scenario, ScenarioRun.
+  FK — внешний ключ внутри хранилища сервиса.
+  REF и пунктир — логическая ссылка между хранилищами, без SQL FOREIGN KEY.
+  Reading хранит последнее показание каждого параметра, не историю.
+  Сценарий содержит одно условие и одно действие.
+  credential_ref — ссылка на секрет, а не пароль камеры.
+endlegend
+@enduml

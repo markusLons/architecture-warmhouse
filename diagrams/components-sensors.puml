@@ -1,0 +1,28 @@
+@startuml
+!include <C4/C4_Component>
+
+title Сервис сенсоров
+
+Container(aggregator, "Агрегатор", "", "Запрашивает показания")
+System_Ext(sensors, "Датчики", "Измеряют параметры")
+ContainerQueue(broker, "Брокер сообщений", "", "Передаёт события")
+ContainerDb(db, "БД сенсоров", "PostgreSQL", "Последние показания и время измерения")
+
+Container(registry, "Реестр устройств", "Go", "Сведения о датчиках")
+
+Container_Boundary(sensorService, "Сервис сенсоров") {
+    Component(api, "API показаний", "Go", "Возвращает последние показания")
+    Component(poller, "Опрос датчиков", "Go", "По расписанию запрашивает измерения")
+    Component(processor, "Обработка показаний", "Go", "Проверяет измерения, вызывает сохранение и публикует события")
+    Component(repository, "Доступ к данным", "Go", "Читает и записывает показания")
+}
+
+Rel(aggregator, api, "Запрашивает показания", "HTTP")
+Rel(api, repository, "Читает показания")
+Rel(poller, sensors, "Запрашивает измерения")
+Rel(poller, processor, "Передаёт измерения")
+Rel(processor, repository, "Сохраняет")
+Rel(processor, broker, "Публикует новые показания")
+Rel(repository, db, "Читает и записывает", "SQL")
+Rel(poller, registry, "Получает список датчиков и параметры подключения", "HTTP")
+@enduml

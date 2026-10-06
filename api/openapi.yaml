@@ -1,0 +1,158 @@
+openapi: 3.0.3
+
+info:
+  title: API Тёплого дома
+  version: 1.0.0
+
+paths:
+  /devices:
+    get:
+      summary: Получить устройства дома
+      parameters:
+        - name: house_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Список устройств
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type_id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                      example: Датчик спальни
+
+  /sensors/{device_id}/temperature:
+    get:
+      summary: Получить последнее показание температуры
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Сохранённая температура и время измерения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: number
+                    example: 22.5
+                  unit:
+                    type: string
+                    example: "°C"
+                  measured_at:
+                    type: string
+                    format: date-time
+        "404":
+          description: Датчик или показание не найдены
+
+  /devices/{device_id}/commands:
+    post:
+      summary: Включить или выключить устройство
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [turn_on, turn_off]
+      responses:
+        "202":
+          description: Команда принята, выполнение ещё не подтверждено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  command_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: accepted
+        "400":
+          description: Недопустимая команда
+        "404":
+          description: Устройство не найдено
+
+  /devices/{device_id}/state:
+    get:
+      summary: Получить последнее подтверждённое состояние
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Состояние включения устройства
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  state:
+                    type: string
+                    enum: ["on", "off"]
+                  confirmed_at:
+                    type: string
+                    format: date-time
+        "404":
+          description: Устройство или подтверждённое состояние не найдены
+
+  /cameras/{device_id}/stream:
+    get:
+      summary: Получить ссылку на RTSP-поток камеры
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Адрес потока для RTSP-плеера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    example: rtsp://192.168.1.50:554/stream
+        "404":
+          description: Камера или настройки потока не найдены

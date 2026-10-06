@@ -1,0 +1,21 @@
+@startuml
+!include <C4/C4_Component>
+title Сервис камер
+Container(web, "Веб-интерфейс", "", "Получает ссылку на поток")
+Container(player, "RTSP-плеер", "Например, VLC", "Воспроизводит видео")
+Container(registry, "Реестр устройств", "Go", "Сведения об устройствах и доступе к дому")
+System_Ext(cameras, "Камеры", "Предоставляют видеопоток")
+ContainerDb(db, "БД камер", "PostgreSQL", "Настройки подключения к камерам")
+Container_Boundary(cameraService, "Сервис камер") {
+    Component(api, "API просмотра", "Go", "Принимает запрос ссылки на поток")
+    Component(manager, "Управление просмотром", "Go", "Проверяет доступ и возвращает RTSP-ссылку")
+    Component(repository, "Доступ к данным", "Go", "Получает настройки подключения")
+}
+Rel(web, api, "Запрашивает RTSP-ссылку", "HTTP")
+Rel(api, manager, "Передаёт запрос")
+Rel(manager, registry, "Проверяет камеру и доступ к дому", "HTTP")
+Rel(manager, repository, "Читает настройки")
+Rel(repository, db, "Читает", "SQL")
+Rel(web, player, "Передаёт полученную RTSP-ссылку")
+Rel(player, cameras, "Получает видеопоток", "RTSP")
+@enduml

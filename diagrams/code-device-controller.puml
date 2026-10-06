@@ -1,0 +1,35 @@
+@startuml
+title Связь с исполнительными устройствами
+
+interface DeviceController {
+    +execute(command: DeviceCommand): DeviceCommandResult
+}
+
+class DeviceControllerImpl {
+    -connection: DeviceConnection
+    +execute(command: DeviceCommand): DeviceCommandResult
+}
+
+class DeviceCommand {
+    +commandId: string
+    +deviceId: string
+    +action: string
+}
+
+class DeviceCommandResult {
+    +commandId: string
+    +status: string
+    +errorMessage: string
+}
+
+class DeviceConnection {
+    +send(command: DeviceCommand): DeviceCommandResult
+}
+
+DeviceControllerImpl ..|> DeviceController : реализует
+DeviceControllerImpl --> DeviceConnection : использует
+DeviceControllerImpl ..> DeviceCommand : принимает
+DeviceControllerImpl ..> DeviceCommandResult : возвращает
+DeviceConnection ..> DeviceCommand : отправляет
+DeviceConnection ..> DeviceCommandResult : получает
+@enduml

@@ -1,0 +1,37 @@
+@startuml
+!include <C4/C4_Component>
+
+title Сервис исполнительных устройств
+
+Container(web, "Веб-интерфейс", "", "Отправляет ручные команды")
+Container(aggregator, "Агрегатор", "", "Запрашивает состояния")
+ContainerQueue(broker, "Брокер сообщений", "", "Передаёт команды и результаты")
+System_Ext(devices, "Исполнительные устройства", "Выполняют команды")
+ContainerDb(db, "БД исполнителей", "PostgreSQL", "Команды и известные состояния")
+
+Container(registry, "Реестр устройств", "Go", "Сведения об исполнителях")
+
+Container_Boundary(actuatorService, "Сервис исполнительных устройств") {
+    Component(api, "API команд и состояний", "Go", "Принимает команды и возвращает состояния")
+    Component(consumer, "Приём сообщений", "Go", "Получает команды сценариев")
+    Component(handler, "Обработчик команд", "Go", "Проверяет команды и отслеживает повторы по идентификатору")
+    Component(adapter, "Связь с устройствами", "Go", "Отправляет команды и получает подтверждения")
+    Component(state, "Учёт выполнения и состояния", "Go", "Учитывает результаты и подтверждённое состояние")
+    Component(repository, "Доступ к данным", "Go", "Хранит команды и состояния")
+}
+
+Rel(web, api, "Отправляет команды", "HTTP")
+Rel(aggregator, api, "Запрашивает состояния", "HTTP")
+Rel(api, repository, "Читает состояния")
+Rel(api, handler, "Передаёт команды")
+Rel(broker, consumer, "Доставляет команды")
+Rel(consumer, handler, "Передаёт команды")
+Rel(handler, repository, "Проверяет и регистрирует команды")
+Rel(handler, adapter, "Поручает выполнение")
+Rel(adapter, devices, "Отправляет команды и получает подтверждения")
+Rel(adapter, state, "Передаёт результаты")
+Rel(state, repository, "Сохраняет результаты и состояния")
+Rel(state, broker, "Публикует результаты команд")
+Rel(repository, db, "Читает и записывает", "SQL")
+Rel(handler, registry, "Проверяет устройство и его возможности", "HTTP")
+@enduml

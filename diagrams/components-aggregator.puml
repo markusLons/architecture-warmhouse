@@ -1,0 +1,19 @@
+@startuml
+!include <C4/C4_Component>
+title Агрегатор информации
+Container(web, "Веб-интерфейс", "", "Показывает сводку по дому")
+Container(registry, "Реестр устройств", "Go", "Предоставляет список устройств")
+Container(sensors, "Сервис сенсоров", "Go", "Предоставляет последние показания")
+Container(actuators, "Сервис исполнителей", "Go", "Предоставляет известные состояния")
+Container_Boundary(aggregator, "Агрегатор информации") {
+    Component(api, "API сводки", "Go", "Принимает запрос данных дома")
+    Component(builder, "Сборка сводки", "Go", "Объединяет устройства, показания и состояния")
+    Component(client, "Клиент сервисов", "Go", "Запрашивает данные через HTTP API")
+}
+Rel(web, api, "Запрашивает сводку", "HTTP")
+Rel(api, builder, "Поручает собрать сводку")
+Rel(builder, client, "Запрашивает данные")
+Rel(client, registry, "Получает устройства дома", "HTTP")
+Rel(client, sensors, "Получает показания и время измерения", "HTTP")
+Rel(client, actuators, "Получает известные состояния", "HTTP")
+@enduml

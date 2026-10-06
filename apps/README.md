@@ -1,5 +1,30 @@
 # Smart Home Sensor Management API
 
+## Проверка задания 5
+
+Из папки `apps` запустите:
+
+```bash
+docker compose -p warmhouse up --build -d
+```
+
+Температурный API доступен по адресу `http://localhost:8081/temperature?location=Living%20Room`.
+Маршрут `/temperature/1` используется приложением `smart_home` для получения показания по ID.
+При каждом запросе генерируется случайная температура от 18 до 28 °C.
+
+В Postman выполните `Create Sensor`, затем несколько раз `Get All Sensors`.
+Поле `value` температурного датчика будет меняться. При создании значение равно 0;
+свежая температура подставляется при чтении датчика.
+
+PostgreSQL выполняет `smart_home/init.sql` при первом запуске с пустым томом.
+Базу `smarthome` создаёт сам скрипт, поэтому `POSTGRES_DB=smarthome` в Compose не задаётся.
+
+Остановить контейнеры, сохранив данные:
+
+```bash
+docker compose -p warmhouse down
+```
+
 ## Prerequisites
 
 - Docker and Docker Compose
