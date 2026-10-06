@@ -1,0 +1,33 @@
+@startuml
+!include <C4/C4_Component>
+
+title Сервис сценариев
+
+Container(web, "Веб-интерфейс", "", "Настройка сценариев")
+ContainerQueue(broker, "Брокер сообщений", "", "Передаёт показания и команды")
+ContainerDb(db, "БД сценариев", "PostgreSQL", "Правила, срабатывания и результаты команд")
+
+Container(registry, "Реестр устройств", "Go", "Устройства и их возможности")
+
+Container_Boundary(scenarioService, "Сервис сценариев") {
+    Component(api, "API сценариев", "Go", "Проверяет и сохраняет настройки правил")
+    Component(consumer, "Приём показаний", "Go", "Получает события измерений")
+    Component(engine, "Проверка правил", "Go", "Проверяет условия и необходимость срабатывания")
+    Component(sender, "Формирование команд", "Go", "Создаёт команды с уникальными идентификаторами")
+    Component(results, "Учёт результатов", "Go", "Обновляет результат срабатывания по идентификатору команды")
+    Component(repository, "Доступ к данным", "Go", "Хранит правила и состояние срабатывания")
+}
+
+Rel(web, api, "Настраивает сценарии", "HTTP")
+Rel(api, repository, "Читает и сохраняет правила")
+Rel(broker, consumer, "Доставляет показания")
+Rel(consumer, engine, "Передаёт измерение")
+Rel(engine, repository, "Читает правила и обновляет состояние срабатывания")
+Rel(engine, sender, "Передаёт действие")
+Rel(sender, broker, "Отправляет команду")
+Rel(repository, db, "Читает и записывает", "SQL")
+Rel(api, registry, "Проверяет устройства в правиле", "HTTP")
+Rel(sender, repository, "Сохраняет срабатывание и идентификатор команды")
+Rel(broker, results, "Доставляет результаты команд")
+Rel(results, repository, "Обновляет результат срабатывания")
+@enduml
